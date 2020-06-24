@@ -12,18 +12,18 @@ const launches = new Map<number, Launch>();
 
 async function downloadLaunchData() {
   log.info("Downloading launch data...");
-  const response = await fetch("https://api.spacexdata.com/v3/launches");
+  const response = await fetch("https://api.spacexdata.com/v3/launches", {
+    method: "GET",
+  });
 
   if (!response.ok) {
-    log.warning("Failed to fetch SpaceX launches");
+    log.warning("Problem downloading launch data.");
     throw new Error("Launch data download failed.");
   }
 
   const launchData = await response.json();
-
   for (const launch of launchData) {
     const payloads = launch["rocket"]["second_stage"]["payloads"];
-
     const customers = _.flatMap(payloads, (payload: any) => {
       return payload["customers"];
     });
@@ -35,14 +35,13 @@ async function downloadLaunchData() {
       customers,
     };
 
-    log.info(JSON.stringify(flightData, null, 2));
-
     launches.set(flightData.flightNumber, flightData);
+
+    log.info(JSON.stringify(flightData));
   }
 }
 
 if (import.meta.main) {
   await downloadLaunchData();
-
   log.info(`Downloaded data for ${launches.size} SpaceX launches.`);
 }
